@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#090a0f">
+<title>Nameless Labs AI</title>
+<link rel="preconnect" href="https://openrouter.ai" crossorigin>
+<link rel="dns-prefetch" href="https://openrouter.ai">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { royal: '#8b5cf6', indigox: '#6366f1', gold: '#f59e0b', mint: '#10b981', space: '#090a0f', nebula: '#1e1035' },
+        fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], mono: ['JetBrains Mono', 'ui-monospace', 'monospace'] }
+      }
+    }
+  };
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+  html, body { height: 100%; }
+  body {
+    background: radial-gradient(ellipse 130% 95% at 50% -10%, #1e1035 0%, #140b27 36%, #090a0f 76%) fixed;
+    background-color: #090a0f;
+    overflow: hidden;
+  }
+
+  /* Ambient background */
+  #stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .orb { position: fixed; z-index: 0; border-radius: 9999px; filter: blur(90px); pointer-events: none; opacity: .5; }
+  .orb-a { width: 38rem; height: 38rem; top: -12rem; left: -8rem; background: radial-gradient(circle, rgba(139,92,246,.55), transparent 65%); animation: drift 22s ease-in-out infinite alternate; }
+  .orb-b { width: 34rem; height: 34rem; bottom: -14rem; right: -10rem; background: radial-gradient(circle, rgba(99,102,241,.5), transparent 65%); animation: drift 26s ease-in-out infinite alternate-reverse; }
+  .orb-c { width: 22rem; height: 22rem; top: 40%; left: 55%; background: radial-gradient(circle, rgba(245,158,11,.16), transparent 65%); animation: drift 30s ease-in-out infinite alternate; }
+  @keyframes drift { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(60px,40px,0) scale(1.15); } }
+  .grain::before { content:''; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .035; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+  .glass { background: rgba(14,15,28,.5); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.08); }
+  .glass-strong { background: rgba(18,19,36,.78); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.1); }
+  .btn-primary { background: linear-gradient(135deg,#8b5cf6,#6366f1); }
+  .btn-primary:hover { filter: brightness(1.12); }
+  .btn-gold { background: linear-gradient(135deg,#fde68a,#f59e0b 60%,#d97706); color: #1a1203; }
+  .btn-gold:hover { filter: brightness(1.08); }
+  .badge-free { color: #10b981; background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.35); }
+  .badge-pro  { color: #f59e0b; background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.4); }
+  .gold-text { background: linear-gradient(135deg,#fde68a,#f59e0b 55%,#b45309); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .grad-text { background: linear-gradient(120deg,#c4b5fd,#8b5cf6 40%,#6366f1 70%,#f59e0b); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shine 8s linear infinite; }
+  @keyframes shine { to { background-position: 200% center; } }
+  .tile-free { background: linear-gradient(135deg,#10b981,#6366f1); }
+  .tile-pro { background: linear-gradient(135deg,#fbbf24,#d97706); color: #1a1203; }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgba(139,92,246,.25); border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(139,92,246,.5); }
+
+  /* Prompt bar animated border */
+  .prompt-border { padding: 1px; border-radius: 1.25rem; background: rgba(255,255,255,.09); transition: box-shadow .3s; }
+  .prompt-border:focus-within { background: linear-gradient(120deg,#8b5cf6,#6366f1,#f59e0b,#8b5cf6); background-size: 300% 100%; animation: borderflow 5s linear infinite; box-shadow: 0 12px 50px -12px rgba(139,92,246,.55); }
+  @keyframes borderflow { to { background-position: 300% 0; } }
+
+  /* Markdown */
+  .md { line-height: 1.75; font-size: .95rem; overflow-wrap: anywhere; }
+  .md > *:first-child { margin-top: 0; } .md > *:last-child { margin-bottom: 0; }
+  .md p { margin: .75em 0; }
+  .md h1,.md h2,.md h3,.md h4 { font-weight: 650; color: #fff; margin: 1.3em 0 .5em; line-height: 1.3; letter-spacing: -.01em; }
+  .md h1 { font-size: 1.45rem; } .md h2 { font-size: 1.22rem; } .md h3 { font-size: 1.06rem; }
+  .md ul,.md ol { margin: .7em 0; padding-left: 1.5em; } .md ul { list-style: disc; } .md ol { list-style: decimal; }
+  .md li { margin: .3em 0; } .md li::marker { color: #8b5cf6; }
+  .md a { color: #a78bfa; text-decoration: underline; text-underline-offset: 3px; }
+  .md strong { color: #fff; font-weight: 600; }
+  .md blockquote { border-left: 3px solid #8b5cf6; padding: .2em 1em; margin: .9em 0; color: #cbd5e1; background: rgba(139,92,246,.07); border-radius: 0 10px 10px 0; }
+  .md hr { border: 0; border-top: 1px solid rgba(255,255,255,.1); margin: 1.3em 0; }
+  .md table { border-collapse: collapse; width: 100%; margin: .9em 0; font-size: .88rem; display: block; overflow-x: auto; }
+  .md th,.md td { border: 1px solid rgba(255,255,255,.12); padding: .5em .85em; text-align: left; }
+  .md th { background: rgba(139,92,246,.15); color: #fff; }
+  .md :not(pre) > code { font-family: 'JetBrains Mono', monospace; font-size: .84em; background: rgba(139,92,246,.16); border: 1px solid rgba(139,92,246,.25); padding: .1em .4em; border-radius: 6px; color: #ddd6fe; }
+  .codeblock { margin: 1em 0; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); background: #0a0b13; box-shadow: 0 8px 30px -12px rgba(0,0,0,.6); }
+  .codeblock .cb-head { display: flex; align-items: center; justify-content: space-between; padding: .45em .9em; background: rgba(255,255,255,.04); border-bottom: 1px solid rgba(255,255,255,.07); font-family: 'JetBrains Mono', monospace; font-size: .72rem; color: #94a3b8; }
+  .codeblock .cb-dots { display: flex; gap: 6px; align-items: center; }
+  .codeblock .cb-dots i { width: 9px; height: 9px; border-radius: 9999px; display: block; }
+  .codeblock .cb-copy { color: #a78bfa; cursor: pointer; background: none; border: 0; font: inherit; padding: .2em .6em; border-radius: 6px; }
+  .codeblock .cb-copy:hover { background: rgba(139,92,246,.2); }
+  .codeblock pre { margin: 0; padding: 1em 1.1em; overflow-x: auto; }
+  .codeblock pre code { font-family: 'JetBrains Mono', monospace; font-size: .82rem; line-height: 1.65; background: transparent !important; padding: 0 !important; }
+
+  .cursor::after { content: '▍'; color: #8b5cf6; margin-left: 2px; animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .fade-in { animation: fadeIn .3s ease both; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .pop { animation: pop .18s ease both; transform-origin: top left; }
+  @keyframes pop { from { opacity: 0; transform: scale(.96) translateY(-4px); } to { opacity: 1; transform: none; } }
+  .dots span { display: inline-block; width: 7px; height: 7px; border-radius: 9999px; background: #8b5cf6; margin-right: 5px; animation: bounce 1.2s infinite ease-in-out; }
+  .dots span:nth-child(2) { animation-delay: .15s; background: #6366f1; } .dots span:nth-child(3) { animation-delay: .3s; background: #f59e0b; }
+  @keyframes bounce { 0%,80%,100% { transform: translateY(0); opacity: .5; } 40% { transform: translateY(-6px); opacity: 1; } }
+  .float { animation: float 6s ease-in-out infinite; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .meter i { display: inline-block; width: 12px; height: 4px; border-radius: 3px; margin-right: 2px; background: rgba(255,255,255,.12); }
+  .meter i.on { background: linear-gradient(90deg,#8b5cf6,#6366f1); }
+  .meter.gold i.on { background: linear-gradient(90deg,#fbbf24,#d97706); }
+  kbd { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 1px 5px; border-radius: 5px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #94a3b8; }
+  input[type=range] { accent-color: #8b5cf6; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; } }
+</style>
+</head>
+<body class="grain text-slate-200 font-sans antialiased">
+
+<canvas id="stars"></canvas>
+<div class="orb orb-a"></div><div class="orb orb-b"></div><div class="orb orb-c"></div>
+
+<div id="app" class="relative z-10 flex h-[100dvh] overflow-hidden">
+
+  <div id="backdrop" class="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm hidden md:hidden"></div>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="glass fixed md:static inset-y-0 left-0 z-40 w-[19rem] shrink-0 -translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col border-y-0 border-l-0">
+    <div class="flex items-center gap-3 px-4 pt-4 pb-3">
+      <div class="relative h-10 w-10 rounded-xl btn-primary grid place-items-center shadow-lg shadow-royal/40">
+        <svg viewBox="0 0 24 24" class="h-5 w-5 text-white" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg>
+      </div>
+      <div class="leading-tight">
+        <div class="font-semibold text-white tracking-tight">Nameless Labs</div>
+        <div class="text-[10px] text-slate-400 tracking-[.25em] uppercase">AI · 5.5</div>
+      </div>
+      <button id="closeSidebar" class="ml-auto md:hidden text-slate-400 hover:text-white p-1" aria-label="Close sidebar"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+
+    <div class="px-3 space-y-2">
+      <button id="newChat" class="w-full btn-primary text-white text-sm font-medium rounded-xl py-2.5 flex items-center justify-center gap-2 shadow-lg shadow-royal/25 transition active:scale-[.98]">
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        New chat <kbd class="ml-1 !bg-white/15 !border-white/20 !text-white/80">Ctrl K</kbd>
+      </button>
+      <div class="relative">
+        <svg viewBox="0 0 24 24" class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="search" type="text" placeholder="Search chats…" class="w-full bg-black/25 border border-white/10 focus:border-royal/60 outline-none rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder:text-slate-500 transition">
+      </div>
+    </div>
+
+    <nav id="history" class="flex-1 overflow-y-auto px-2 py-3"></nav>
+
+    <div class="p-3 border-t border-white/5"><div id="planCard" class="rounded-xl p-3 glass-strong"></div></div>
+  </aside>
+
+  <!-- Main -->
+  <div class="flex-1 flex flex-col min-w-0 relative">
+
+    <header class="glass relative z-20 flex items-center gap-2 px-3 sm:px-5 h-14 border-x-0 border-t-0">
+      <button id="openSidebar" class="md:hidden p-2 -ml-1 text-slate-300 hover:text-white" aria-label="Open sidebar"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></button>
+
+      <div class="relative">
+        <button id="modelBtn" class="group flex items-center gap-2.5 rounded-xl pl-1.5 pr-3 py-1.5 hover:bg-white/5 border border-white/10 hover:border-royal/40 transition" aria-haspopup="listbox" aria-expanded="false">
+          <span id="modelTile" class="h-7 w-7 rounded-lg grid place-items-center text-[13px] font-bold tile-free text-white">P</span>
+          <span class="text-left leading-tight">
+            <span id="modelName" class="block text-sm font-semibold text-white">Pulse 5.5 Nano</span>
+            <span id="modelSub" class="hidden sm:block text-[10px] text-slate-400">Ultra-fast daily tasks</span>
+          </span>
+          <span id="modelBadge" class="badge-free text-[10px] font-bold tracking-wider rounded-full px-2 py-0.5">FREE</span>
+          <svg viewBox="0 0 24 24" class="h-4 w-4 text-slate-400 group-hover:text-white transition" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div id="modelMenu" class="hidden absolute left-0 top-full mt-2 w-[min(25rem,calc(100vw-1.5rem))] glass-strong rounded-2xl p-2 shadow-2xl shadow-black/70 pop" role="listbox"></div>
+      </div>
+
+      <div class="ml-auto flex items-center gap-1 sm:gap-1.5">
+        <div id="keyStatus" class="hidden md:flex items-center gap-2 text-xs text-slate-400 px-2"></div>
+        <button id="upgradeTop" class="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold rounded-lg px-3 py-1.5 badge-pro hover:brightness-125 transition">
+          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="currentColor"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/></svg><span id="upgradeTopLabel">Upgrade</span>
+        </button>
+        <button id="exportBtn" class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5" aria-label="Export chat" title="Export chat as Markdown"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></button>
+        <button id="settingsBtn" class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+      </div>
+    </header>
+
+    <main id="chat" class="flex-1 overflow-y-auto">
+      <div id="messages" class="max-w-3xl mx-auto px-4 pt-6 pb-48 space-y-8"></div>
+    </main>
+
+    <button id="toBottom" class="hidden absolute right-5 bottom-36 z-20 h-10 w-10 rounded-full glass-strong grid place-items-center text-slate-200 hover:text-white hover:border-royal/60 shadow-xl transition" aria-label="Scroll to latest">
+      <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+    </button>
+
+    <footer class="absolute bottom-0 inset-x-0 z-10 px-3 sm:px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-12 pointer-events-none bg-gradient-to-t from-space via-space/75 to-transparent">
+      <div class="max-w-3xl mx-auto pointer-events-auto">
+        <div class="prompt-border">
+          <div class="rounded-[1.2rem] glass-strong !border-0 p-2.5 flex items-end gap-2" style="background: rgba(14,15,30,.9);">
+            <textarea id="prompt" rows="1" placeholder="Message Nameless Labs AI…" class="flex-1 bg-transparent resize-none outline-none px-3 py-2.5 text-[15px] text-white placeholder:text-slate-500 max-h-52" autocomplete="off"></textarea>
+            <button id="sendBtn" class="btn-primary text-white rounded-xl h-10 w-10 grid place-items-center shrink-0 transition active:scale-95 disabled:opacity-35 disabled:cursor-not-allowed disabled:active:scale-100 shadow-lg shadow-royal/30" aria-label="Send" disabled>
+              <svg id="sendIcon" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+              <svg id="stopIcon" viewBox="0 0 24 24" class="h-4 w-4 hidden" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2.5"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="flex items-center justify-between mt-2 px-1 text-[11px] text-slate-500">
+          <span class="hidden sm:inline"><kbd>Enter</kbd> send · <kbd>Shift</kbd>+<kbd>Enter</kbd> newline · <kbd>Ctrl</kbd>+<kbd>/</kbd> focus</span>
+          <span class="sm:hidden">AI can make mistakes.</span>
+          <span id="charCount" class="font-mono"></span>
+        </div>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div id="settingsModal" class="hidden fixed inset-0 z-50 grid place-items-center p-4 bg-black/70 backdrop-blur-sm" role="dialog" aria-modal="true">
+  <div class="glass-strong rounded-2xl w-full max-w-md p-6 pop shadow-2xl">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-lg font-semibold text-white">Settings</h2>
+      <button data-close="settingsModal" class="text-slate-400 hover:text-white p-1" aria-label="Close"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+
+    <div class="rounded-xl border border-mint/25 bg-mint/[.07] px-3 py-2.5 mb-5 flex items-center gap-2.5 text-sm">
+      <span class="h-2 w-2 rounded-full bg-mint shadow-[0_0_8px] shadow-mint"></span>
+      <span class="text-slate-200">OpenRouter connected</span>
+      <span class="ml-auto font-mono text-xs text-slate-400" id="keyMask"></span>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-5">
+      <div>
+        <label class="flex justify-between text-xs uppercase tracking-wider text-slate-400 mb-1.5"><span>Temperature</span><span id="tempVal" class="text-royal font-mono normal-case">0.7</span></label>
+        <input id="temp" type="range" min="0" max="2" step="0.1" value="0.7" class="w-full">
+      </div>
+      <div>
+        <label class="block text-xs uppercase tracking-wider text-slate-400 mb-1.5">Max tokens</label>
+        <input id="maxTokens" type="number" min="64" max="32000" step="64" value="4096" class="w-full bg-black/30 border border-white/10 focus:border-royal outline-none rounded-xl px-3 py-2 text-sm text-white">
+      </div>
+    </div>
+
+    <label class="block text-xs uppercase tracking-wider text-slate-400 mb-1.5">Custom instructions</label>
+    <textarea id="extra" rows="3" placeholder="Appended to the system prompt on every request. e.g. “Prefer TypeScript. Keep answers under 200 words.”" class="w-full bg-black/30 border border-white/10 focus:border-royal outline-none rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-slate-600 resize-none mb-5"></textarea>
+
+    <div class="flex gap-2">
+      <button id="clearAll" class="px-4 py-2.5 rounded-xl border border-red-400/25 text-sm text-red-300 hover:bg-red-500/10">Clear all chats</button>
+      <button id="saveSettings" class="flex-1 btn-primary text-white text-sm font-medium rounded-xl py-2.5">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pricing modal -->
+<div id="pricingModal" class="hidden fixed inset-0 z-50 overflow-y-auto p-4 bg-black/70 backdrop-blur-sm" role="dialog" aria-modal="true">
+  <div class="min-h-full grid place-items-center">
+    <div class="glass-strong rounded-3xl w-full max-w-3xl p-6 sm:p-8 pop shadow-2xl">
+      <div class="flex items-start justify-between">
+        <div>
+          <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Choose your <span class="grad-text">plan</span></h2>
+          <p class="text-sm text-slate-400 mt-1">Pro unlocks the flagship reasoning and compute models.</p>
+        </div>
+        <button data-close="pricingModal" class="text-slate-400 hover:text-white p-1" aria-label="Close"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-4 mt-6">
+        <div class="rounded-2xl border border-white/10 bg-white/[.03] p-5 flex flex-col">
+          <div class="flex items-center justify-between"><h3 class="font-semibold text-white">Free</h3><span class="badge-free text-[10px] font-bold tracking-wider rounded-full px-2 py-0.5">FREE</span></div>
+          <div class="mt-3"><span class="text-4xl font-bold text-white">$0</span><span class="text-slate-400 text-sm"> / month</span></div>
+          <ul class="mt-5 space-y-2.5 text-sm text-slate-300 flex-1">
+            <li class="flex gap-2"><span class="text-mint">✓</span>Pulse 5.5 Nano</li>
+            <li class="flex gap-2"><span class="text-mint">✓</span>Lyric 5.5 Flash</li>
+            <li class="flex gap-2"><span class="text-mint">✓</span>Vega 5.5 Mini</li>
+            <li class="flex gap-2"><span class="text-mint">✓</span>Local chat history &amp; export</li>
+          </ul>
+          <button id="chooseFree" class="mt-6 w-full rounded-xl border border-white/10 text-sm py-2.5 text-slate-200 hover:bg-white/5 transition">Use Free</button>
+        </div>
+        <div class="rounded-2xl p-5 flex flex-col relative overflow-hidden" style="background: linear-gradient(160deg, rgba(245,158,11,.12), rgba(139,92,246,.12)); border: 1px solid rgba(245,158,11,.45);">
+          <div class="absolute -top-px right-5 text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-b-lg btn-gold">MOST POPULAR</div>
+          <div class="flex items-center justify-between"><h3 class="font-semibold gold-text">Pro</h3><span class="badge-pro text-[10px] font-bold tracking-wider rounded-full px-2 py-0.5 mr-24 hidden"></span></div>
+          <div class="mt-3"><span class="text-4xl font-bold text-white">$20</span><span class="text-slate-400 text-sm"> / month</span></div>
+          <ul class="mt-5 space-y-2.5 text-sm text-slate-200 flex-1">
+            <li class="flex gap-2"><span class="text-gold">✓</span>Everything in Free</li>
+            <li class="flex gap-2"><span class="text-gold">✓</span>Aether 5.5 Pro — deep reasoning</li>
+            <li class="flex gap-2"><span class="text-gold">✓</span>Quasar 5.5 Apex — flagship compute</li>
+            <li class="flex gap-2"><span class="text-gold">✓</span>Priority access</li>
+          </ul>
+          <button id="choosePro" class="mt-6 w-full rounded-xl text-sm font-bold py-2.5 btn-gold transition active:scale-[.98] shadow-lg shadow-gold/20">Activate Pro</button>
+        </div>
+      </div>
+      <p class="text-[11px] text-slate-500 mt-4 text-center">Billing isn't connected in this build. “Activate Pro” flips a local flag; hook your payment provider into <code class="text-slate-400">activatePro()</code>.</p>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-32 z-[60] hidden glass-strong rounded-xl px-4 py-2 text-sm text-white shadow-xl"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ================= CONFIG ================= */
+  const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+  // WARNING: anything in this file is readable by every visitor. Revoke/rotate before sharing,
+  // and set a credit limit on the key in your OpenRouter dashboard.
+  const OPENROUTER_API_KEY = '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';
+
+  const MODELS = [
+    { id: 'pulse',  letter: 'P', name: 'Pulse 5.5 Nano',  tier: 'free', or: 'nvidia/nemotron-3.5-lightning:free', fb: ['google/gemma-4-26b-a4b-it:free', 'google/gemma-4-31b-it:free'], think: 'off',   short: 'Ultra-fast daily tasks',    desc: 'Ultra-fast daily tasks & quick chat',            focus: 'ultra-fast daily tasks and quick chat',              speed: 5, power: 2 },
+    { id: 'lyric',  letter: 'L', name: 'Lyric 5.5 Flash', tier: 'free', or: 'google/gemini-3.6-flash', fb: ['google/gemini-3.5-flash', 'google/gemma-4-26b-a4b-it:free'], think: 'off',                 short: 'Everyday assistant',        desc: 'Balanced everyday assistant & drafting',         focus: 'balanced everyday assistance and drafting',          speed: 4, power: 3 },
+    { id: 'vega',   letter: 'V', name: 'Vega 5.5 Mini',   tier: 'free', or: 'nvidia/nemotron-3-ultra-550b-a55b:free', fb: ['google/gemma-4-31b-it:free', 'nvidia/nemotron-3.5-lightning:free'], think: 'off',   short: 'Fast coding helper',        desc: 'Fast coding helper & logic',                     focus: 'fast coding help and logic problems',                speed: 4, power: 3 },
+    { id: 'aether', letter: 'A', name: 'Aether 5.5 Pro',  tier: 'pro',  or: 'anthropic/claude-sonnet-5', fb: ['anthropic/claude-sonnet-4.6'], think: 'off',             short: 'Deep reasoning',            desc: 'Deep reasoning & full-stack coding',             focus: 'deep reasoning and full-stack engineering',          speed: 3, power: 5 },
+    { id: 'quasar', letter: 'Q', name: 'Quasar 5.5 Apex', tier: 'pro',  or: 'openai/gpt-5.5', fb: ['openai/gpt-5.4'], think: 'low',                           short: 'Flagship heavy compute',    desc: 'Flagship heavy compute & autonomous workflows',  focus: 'heavy compute and autonomous multi-step workflows',  speed: 2, power: 5 }
+  ];
+
+  // Dynamic system prompt, rebuilt for the selected model on every request.
+  function systemPrompt(m) {
+    const parts = [
+      `You are ${m.name}, an AI assistant from the Nameless Labs 5.5 model family, tuned for ${m.focus}.`,
+      'Answer any question accurately and helpfully, technical or general. Style: sharp, direct, no filler. Lead with the answer, code, or solution in the first sentence, be concise, and stop when done.',
+      'Format: use Markdown. Put code in fenced blocks with a language tag. Prefer clean, modular, production-ready code with modern syntax.',
+      'Never claim to be human. If asked about your underlying architecture or vendor, say you cannot share those details.'
+    ];
+    if (state.settings.extra) parts.push('User instructions: ' + state.settings.extra);
+    return parts.join('\n');
+  }
+
+  const SUGGESTIONS = [
+    { i: '🏗️', t: 'Architecture', q: 'Design a REST API for a multi-tenant SaaS billing system' },
+    { i: '⚛️', t: 'Frontend',     q: 'Write a debounced React hook in TypeScript with generics' },
+    { i: '🧠', t: 'Concepts',     q: 'Explain CAP theorem trade-offs with real database examples' },
+    { i: '🛠️', t: 'Refactor',     q: 'Refactor nested callbacks into clean async/await with error handling' }
+  ];
+
+  /* ================= UTILS ================= */
+  const $ = (s, r = document) => r.querySelector(s);
+  const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+  };
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmtTime = ts => new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+  /* ================= STATE ================= */
+  const saved = store.get('nl.settings', {});
+  delete saved.apiKey; // old builds stored a user key; the key is now a constant
+  const state = {
+    convs: store.get('nl.convs', []),
+    activeId: store.get('nl.active', null),
+    modelId: store.get('nl.model', 'pulse'),
+    plan: store.get('nl.plan', 'free'),
+    settings: Object.assign({ temperature: 0.7, maxTokens: 4096, extra: '' }, saved),
+    query: '',
+    streaming: false,
+    abort: null
+  };
+  const model = () => MODELS.find(m => m.id === state.modelId) || MODELS[0];
+  const activeConv = () => state.convs.find(c => c.id === state.activeId) || null;
+  const persist = () => { store.set('nl.convs', state.convs); store.set('nl.active', state.activeId); };
+
+  /* ================= MARKDOWN ================= */
+  marked.setOptions({ gfm: true, breaks: true });
+  const renderMd = t => DOMPurify.sanitize(marked.parse(t || ''));
+  function enhance(root, hl = true) {
+    root.querySelectorAll('a').forEach(a => { a.target = '_blank'; a.rel = 'noopener noreferrer'; });
+    root.querySelectorAll('pre').forEach(pre => {
+      if (pre.parentElement.classList.contains('codeblock')) return;
+      const code = pre.querySelector('code'); if (!code) return;
+      const lang = ((code.className.match(/language-([\w+-]+)/) || [])[1]) || 'text';
+      code.removeAttribute('data-highlighted');
+      if (hl) { try { hljs.highlightElement(code); } catch {} }
+      const wrap = document.createElement('div');
+      wrap.className = 'codeblock';
+      wrap.innerHTML = `<div class="cb-head"><span class="cb-dots"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="ml-2">${esc(lang)}</span></span><button class="cb-copy" type="button">Copy</button></div>`;
+      pre.replaceWith(wrap); wrap.appendChild(pre);
+    });
+  }
+
+  /* ================= RENDER ================= */
+  const messagesEl = $('#messages');
+  const chatEl = $('#chat');
+
+  const badgeHTML = tier => tier === 'pro'
+    ? '<span class="badge-pro text-[10px] font-bold tracking-wider rounded-full px-2 py-0.5">PRO</span>'
+    : '<span class="badge-free text-[10px] font-bold tracking-wider rounded-full px-2 py-0.5">FREE</span>';
+  const meter = (n, gold) => `<span class="meter ${gold ? 'gold' : ''}">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</span>`;
+
+  function greeting() {
+    const h = new Date().getHours();
+    return h < 5 ? 'Burning the midnight oil' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : h < 22 ? 'Good evening' : 'Late night session';
+  }
+
+  function emptyStateHTML() {
+    const m = model();
+    return `
+      <div class="pt-6 sm:pt-14 text-center fade-in">
+        <div class="float mx-auto relative h-20 w-20">
+          <div class="absolute inset-0 rounded-3xl btn-primary blur-xl opacity-60"></div>
+          <div class="relative h-20 w-20 rounded-3xl btn-primary grid place-items-center shadow-2xl shadow-royal/50 border border-white/20">
+            <svg viewBox="0 0 24 24" class="h-10 w-10 text-white" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z"/></svg>
+          </div>
+        </div>
+        <p class="mt-7 text-sm tracking-[.25em] uppercase text-slate-400">${greeting()}</p>
+        <h1 class="mt-2 text-4xl sm:text-5xl font-extrabold tracking-tight"><span class="grad-text">What are we building?</span></h1>
+        <p class="mt-3 text-slate-400 flex items-center justify-center gap-2 flex-wrap">Chatting with <span class="font-semibold text-white">${m.name}</span> ${badgeHTML(m.tier)}</p>
+
+        <div class="mt-10 grid sm:grid-cols-2 gap-3 text-left">
+          ${SUGGESTIONS.map(s => `
+            <button class="chip glass rounded-2xl p-4 hover:border-royal/50 hover:bg-white/[.04] hover:-translate-y-0.5 transition group" data-q="${esc(s.q)}">
+              <span class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-royal">${s.i} ${s.t}</span>
+              <span class="block mt-1.5 text-sm text-slate-300 group-hover:text-white">${esc(s.q)}</span>
+            </button>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  function messageHTML(msg, idx, isLast, live) {
+    if (msg.role === 'user') {
+      return `
+        <div class="flex flex-col items-end fade-in" data-idx="${idx}">
+          <div class="max-w-[88%] rounded-2xl rounded-br-md px-4 py-2.5 text-[15px] text-white whitespace-pre-wrap break-words shadow-lg shadow-royal/10" style="background: linear-gradient(135deg, rgba(139,92,246,.6), rgba(99,102,241,.55)); border: 1px solid rgba(255,255,255,.14);">${esc(msg.content)}</div>
+          <span class="mt-1 mr-1 text-[10px] text-slate-500">${msg.ts ? fmtTime(msg.ts) : ''}</span>
+        </div>`;
+    }
+    const pro = msg.tier === 'pro';
+    const streamingThis = live && isLast;
+    const thinking = streamingThis && !msg.content;
+    const body = msg.content ? renderMd(msg.content) : '';
+    const meta = [msg.ts ? fmtTime(msg.ts) : '', msg.ttft ? '⚡ ' + (msg.ttft / 1000).toFixed(1) + 's to first token' : '', msg.ms ? (msg.ms / 1000).toFixed(1) + 's total' : ''].filter(Boolean).join(' · ');
+    return `
+      <div class="flex gap-3 fade-in" data-idx="${idx}">
+        <div class="h-9 w-9 shrink-0 rounded-xl grid place-items-center text-sm font-bold mt-0.5 shadow-lg ${pro ? 'tile-pro shadow-gold/20' : 'tile-free text-white shadow-mint/10'}">${esc(msg.letter || 'N')}</div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2 mb-1 text-xs"><span class="font-semibold text-slate-200">${esc(msg.model || 'Nameless Labs AI')}</span>${badgeHTML(msg.tier || 'free')}<span class="text-slate-500">${meta}</span></div>
+          ${thinking ? '<div class="dots py-3"><span></span><span></span><span></span></div>' : ''}
+          <div class="md bubble ${streamingThis && msg.content ? 'cursor' : ''} ${msg.error ? 'text-red-300' : 'text-slate-200'}">${body}</div>
+          ${!streamingThis && msg.content ? `<div class="mt-2 -ml-1.5 flex gap-1 text-slate-500">
+            <button class="act-copy text-xs px-2 py-1 rounded-md hover:bg-white/5 hover:text-slate-200 transition" type="button">Copy</button>
+            ${isLast ? '<button class="act-regen text-xs px-2 py-1 rounded-md hover:bg-white/5 hover:text-slate-200 transition" type="button">↻ Regenerate</button>' : ''}
+          </div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function renderMessages() {
+    const c = activeConv();
+    if (!c || !c.messages.length) { messagesEl.innerHTML = emptyStateHTML(); return; }
+    messagesEl.innerHTML = c.messages.map((m, i) => messageHTML(m, i, i === c.messages.length - 1, state.streaming)).join('');
+    messagesEl.querySelectorAll('.bubble').forEach(b => enhance(b));
+  }
+
+  function updateLiveBubble() {
+    const c = activeConv(); if (!c) return;
+    const last = c.messages[c.messages.length - 1];
+    const node = messagesEl.querySelector('[data-idx="' + (c.messages.length - 1) + '"]');
+    if (!node) return;
+    node.querySelector('.dots')?.remove();
+    const b = node.querySelector('.bubble');
+    b.classList.add('cursor');
+    b.innerHTML = renderMd(last.content);
+    enhance(b, false); // skip syntax highlighting while streaming; done once on completion
+  }
+
+  function renderHistory() {
+    const q = state.query.trim().toLowerCase();
+    const list = [...state.convs]
+      .filter(c => !q || c.title.toLowerCase().includes(q) || c.messages.some(m => m.content.toLowerCase().includes(q)))
+      .sort((a, b) => b.updated - a.updated);
+    if (!list.length) { $('#history').innerHTML = `<p class="px-3 py-6 text-center text-xs text-slate-500">${q ? 'No matches.' : 'No conversations yet.<br>Start one below.'}</p>`; return; }
+
+    const sod = new Date(); sod.setHours(0, 0, 0, 0);
+    const day = sod.getTime(), DAY = 864e5;
+    const groups = { 'Today': [], 'Yesterday': [], 'Previous 7 days': [], 'Older': [] };
+    list.forEach(c => {
+      const g = c.updated >= day ? 'Today' : c.updated >= day - DAY ? 'Yesterday' : c.updated >= day - 7 * DAY ? 'Previous 7 days' : 'Older';
+      groups[g].push(c);
+    });
+    $('#history').innerHTML = Object.entries(groups).filter(([, v]) => v.length).map(([label, items]) => `
+      <div class="px-3 pt-3 pb-1 text-[10px] uppercase tracking-widest text-slate-500">${label}</div>
+      ${items.map(c => `
+        <div class="group flex items-center rounded-xl mb-0.5 ${c.id === state.activeId ? 'bg-royal/15 border border-royal/30' : 'border border-transparent hover:bg-white/5'}">
+          <button class="hist-open flex-1 min-w-0 text-left px-3 py-2 text-sm truncate ${c.id === state.activeId ? 'text-white font-medium' : 'text-slate-300'}" data-id="${c.id}">${esc(c.title)}</button>
+          <button class="hist-ren opacity-60 md:opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-white transition" data-id="${c.id}" aria-label="Rename"><svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+          <button class="hist-del opacity-60 md:opacity-0 group-hover:opacity-100 p-1.5 mr-1 text-slate-400 hover:text-red-400 transition" data-id="${c.id}" aria-label="Delete"><svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+        </div>`).join('')}`).join('');
+  }
+
+  function renderPlan() {
+    const pro = state.plan === 'pro';
+    $('#planCard').innerHTML = `
+      <div class="flex items-center justify-between"><span class="text-sm font-semibold ${pro ? 'gold-text' : 'text-white'}">${pro ? 'Pro plan' : 'Free plan'}</span>${badgeHTML(pro ? 'pro' : 'free')}</div>
+      <p class="text-xs text-slate-400 mt-1">${pro ? 'All 5 models unlocked.' : '3 of 5 models available.'}</p>
+      <div class="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden"><div class="h-full rounded-full ${pro ? 'btn-gold' : 'tile-free'}" style="width:${pro ? 100 : 60}%"></div></div>
+      <button id="planBtn" class="mt-3 w-full text-xs font-bold rounded-lg py-2 ${pro ? 'border border-white/10 text-slate-300 hover:bg-white/5' : 'btn-gold'} transition">${pro ? 'Manage plan' : 'Upgrade to Pro'}</button>`;
+    $('#upgradeTopLabel').textContent = pro ? 'Pro' : 'Upgrade';
+  }
+
+  function renderModelButton() {
+    const m = model();
+    $('#modelName').textContent = m.name;
+    $('#modelSub').textContent = m.short;
+    const t = $('#modelTile'); t.textContent = m.letter;
+    t.className = 'h-7 w-7 rounded-lg grid place-items-center text-[13px] font-bold ' + (m.tier === 'pro' ? 'tile-pro' : 'tile-free text-white');
+    const b = $('#modelBadge'); b.textContent = m.tier.toUpperCase();
+    b.className = (m.tier === 'pro' ? 'badge-pro' : 'badge-free') + ' text-[10px] font-bold tracking-wider rounded-full px-2 py-0.5';
+  }
+
+  function renderModelMenu() {
+    const locked = m => m.tier === 'pro' && state.plan !== 'pro';
+    const group = (label, tier) => `
+      <div class="px-3 pt-2 pb-1 text-[10px] uppercase tracking-widest text-slate-500">${label}</div>
+      ${MODELS.filter(m => m.tier === tier).map(m => `
+        <button class="model-opt w-full text-left rounded-xl px-3 py-2.5 flex items-center gap-3 hover:bg-white/[.06] transition ${m.id === state.modelId ? 'bg-royal/15 ring-1 ring-royal/40' : ''}" data-id="${m.id}" role="option" aria-selected="${m.id === state.modelId}">
+          <span class="h-9 w-9 rounded-lg grid place-items-center text-sm font-bold shrink-0 ${m.tier === 'pro' ? 'tile-pro' : 'tile-free text-white'}">${m.letter}</span>
+          <span class="flex-1 min-w-0">
+            <span class="flex items-center gap-2"><span class="text-sm font-semibold text-white">${m.name}</span>${locked(m) ? '<span class="text-xs">🔒</span>' : ''}</span>
+            <span class="block text-xs text-slate-400 mt-0.5 truncate">${m.desc}</span>
+            <span class="mt-1.5 flex items-center gap-3 text-[10px] text-slate-500 uppercase tracking-wider">
+              <span class="flex items-center gap-1.5">Speed ${meter(m.speed, m.tier === 'pro')}</span>
+              <span class="flex items-center gap-1.5">Power ${meter(m.power, m.tier === 'pro')}</span>
+            </span>
+          </span>
+          ${m.id === state.modelId ? '<span class="text-royal">✓</span>' : ''}
+        </button>`).join('')}`;
+    $('#modelMenu').innerHTML = group('Free tier', 'free') + '<div class="my-1 border-t border-white/5"></div>' + group('Pro tier', 'pro');
+  }
+
+  function renderKeyStatus() {
+    const k = state.key || { c: 'bg-slate-500', t: 'Connecting…' };
+    $('#keyStatus').innerHTML = `<span class="h-1.5 w-1.5 rounded-full ${k.c}"></span>${esc(k.t)}`;
+  }
+
+  function renderSend() {
+    const btn = $('#sendBtn'), val = $('#prompt').value;
+    $('#sendIcon').classList.toggle('hidden', state.streaming);
+    $('#stopIcon').classList.toggle('hidden', !state.streaming);
+    btn.disabled = !state.streaming && !val.trim();
+    btn.setAttribute('aria-label', state.streaming ? 'Stop' : 'Send');
+    $('#charCount').textContent = val.length > 200 ? val.length.toLocaleString() + ' chars' : '';
+  }
+
+  function renderAll() { renderHistory(); renderPlan(); renderModelButton(); renderModelMenu(); renderKeyStatus(); renderMessages(); renderSend(); }
+
+  /* ================= UI HELPERS ================= */
+  function toast(msg) {
+    const t = $('#toast'); t.textContent = msg; t.classList.remove('hidden');
+    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.add('hidden'), 2400);
+  }
+  const openModal = id => $('#' + id).classList.remove('hidden');
+  const closeModal = id => $('#' + id).classList.add('hidden');
+  const openSidebar = () => { $('#sidebar').classList.remove('-translate-x-full'); $('#backdrop').classList.remove('hidden'); };
+  const closeSidebar = () => { $('#sidebar').classList.add('-translate-x-full'); $('#backdrop').classList.add('hidden'); };
+  const closeModelMenu = () => { $('#modelMenu').classList.add('hidden'); $('#modelBtn').setAttribute('aria-expanded', 'false'); };
+  const nearBottom = () => chatEl.scrollHeight - chatEl.scrollTop - chatEl.clientHeight < 160;
+  const scrollBottom = (force, smooth) => { if (force || nearBottom()) chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: smooth ? 'smooth' : 'auto' }); };
+
+  function openSettings() {
+    $('#temp').value = state.settings.temperature; $('#tempVal').textContent = state.settings.temperature;
+    $('#maxTokens').value = state.settings.maxTokens; $('#extra').value = state.settings.extra || '';
+    $('#keyMask').textContent = OPENROUTER_API_KEY.slice(0, 9) + '…' + OPENROUTER_API_KEY.slice(-4);
+    openModal('settingsModal');
+  }
+  const openPricing = () => { closeModelMenu(); openModal('pricingModal'); };
+
+  function activatePro() {
+    // TODO: replace with real checkout / entitlement verification.
+    state.plan = 'pro'; store.set('nl.plan', 'pro'); renderAll(); closeModal('pricingModal'); toast('Pro activated ✨');
+  }
+  function setFree() {
+    state.plan = 'free'; store.set('nl.plan', 'free');
+    if (model().tier === 'pro') { state.modelId = 'pulse'; store.set('nl.model', 'pulse'); }
+    renderAll(); closeModal('pricingModal'); toast('Switched to Free');
+  }
+
+  function exportChat() {
+    const c = activeConv();
+    if (!c || !c.messages.length) return toast('Nothing to export yet');
+    const md = `# ${c.title}\n\n` + c.messages.map(m => `### ${m.role === 'user' ? 'You' : (m.model || 'Assistant')}\n\n${m.content}\n`).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([md], { type: 'text/markdown' }));
+    a.download = (c.title.replace(/[^\w-]+/g, '-').slice(0, 40) || 'chat') + '.md';
+    a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  /* ================= CONVERSATIONS ================= */
+  function newConv() {
+    const c = { id: uid(), title: 'New chat', messages: [], updated: Date.now() };
+    state.convs.push(c); state.activeId = c.id; persist(); return c;
+  }
+  function selectConv(id) { if (state.streaming) return toast('Wait for the reply to finish'); state.activeId = id; persist(); renderAll(); scrollBottom(true); closeSidebar(); }
+  function deleteConv(id) {
+    if (state.streaming && id === state.activeId) return;
+    state.convs = state.convs.filter(c => c.id !== id);
+    if (state.activeId === id) state.activeId = null;
+    persist(); renderAll();
+  }
+  function renameConv(id) {
+    const c = state.convs.find(x => x.id === id); if (!c) return;
+    const t = prompt('Rename chat', c.title);
+    if (t && t.trim()) { c.title = t.trim().slice(0, 60); persist(); renderHistory(); }
+  }
+
+  /* ================= CHAT / STREAMING ================= */
+  async function send(text) {
+    if (state.streaming) return;
+    const m = model();
+    if (m.tier === 'pro' && state.plan !== 'pro') return openPricing();
+    const c = activeConv() || newConv();
+    c.messages.push({ role: 'user', content: text, ts: Date.now() });
+    if (c.title === 'New chat') c.title = text.replace(/\s+/g, ' ').slice(0, 44);
+    c.messages.push({ role: 'assistant', content: '', model: m.name, tier: m.tier, letter: m.letter, ts: Date.now() });
+    c.updated = Date.now(); persist();
+    state.streaming = true; renderHistory(); renderMessages(); renderSend(); scrollBottom(true, true);
+    await stream(c, m);
+  }
+
+  async function regenerate() {
+    if (state.streaming) return;
+    const c = activeConv(); if (!c) return;
+    const m = model();
+    if (m.tier === 'pro' && state.plan !== 'pro') return openPricing();
+    while (c.messages.length && c.messages[c.messages.length - 1].role === 'assistant') c.messages.pop();
+    if (!c.messages.length) return;
+    c.messages.push({ role: 'assistant', content: '', model: m.name, tier: m.tier, letter: m.letter, ts: Date.now() });
+    state.streaming = true; renderMessages(); renderSend(); scrollBottom(true, true);
+    await stream(c, m);
+  }
+
+  async function stream(c, m) {
+    const reply = c.messages[c.messages.length - 1];
+    const t0 = performance.now();
+    const history = c.messages.slice(0, -1).filter(x => x.content && !x.error).map(x => ({ role: x.role, content: x.content })).slice(-24);
+    const payload = {
+      models: [m.or, ...(m.fb || [])], stream: true,
+      provider: { sort: 'throughput' },
+      reasoning: m.think === 'off' ? { enabled: false } : { effort: m.think },
+      temperature: Number(state.settings.temperature),
+      max_tokens: Number(state.settings.maxTokens),
+      messages: [{ role: 'system', content: systemPrompt(m) }, ...history]
+    };
+    const headers = { 'Authorization': 'Bearer ' + OPENROUTER_API_KEY, 'Content-Type': 'application/json', 'X-Title': 'Nameless Labs AI' };
+    if (location.protocol.startsWith('http')) headers['HTTP-Referer'] = location.origin;
+
+    state.abort = { stopped: false, reader: null, abort() { this.stopped = true; try { this.reader && this.reader.cancel(); } catch {} } };
+    let raf = 0;
+    let last = 0;
+    const paint = () => {
+      raf = 0; const n = performance.now();
+      if (n - last < 70) { raf = requestAnimationFrame(paint); return; } // cap re-render rate
+      last = n; updateLiveBubble(); scrollBottom(false);
+    };
+
+    try {
+      const post = b => fetch(API_URL, { method: 'POST', headers, body: JSON.stringify(b) });
+      let res = await post(payload);
+      // Some models reject the reasoning param: retry once without it.
+      if (res.status === 400 && payload.reasoning) { delete payload.reasoning; res = await post(payload); }
+      // Free models rotate and rate-limit: last resort is OpenRouter's free router.
+      if (!res.ok && m.tier === 'free' && [400, 404, 429, 502, 503].includes(res.status)) {
+        res = await post({ model: 'openrouter/free', stream: true, temperature: payload.temperature, max_tokens: payload.max_tokens, messages: payload.messages });
+      }
+      if (state.abort.stopped) throw Object.assign(new Error('stopped'), { name: 'AbortError' });
+      if (!res.ok) {
+        let detail = '';
+        try { const j = await res.json(); detail = (j.error && (j.error.message || j.error)) || ''; } catch {}
+        const hints = { 401: 'The API key was rejected (revoked or invalid).', 402: 'Not enough OpenRouter credits for this paid model. Top up at openrouter.ai/credits, or switch to a free model.', 403: 'Request blocked by moderation or key restrictions.', 404: 'This model is unavailable on OpenRouter right now.', 429: 'Rate limited (free models allow 20 requests/min and 50/day on accounts without $10 in credits). Wait and retry.' };
+        throw new Error((hints[res.status] || 'Request failed.') + (detail ? ' ' + String(detail) : '') + ' (HTTP ' + res.status + ')');
+      }
+      if ((res.headers.get('content-type') || '').includes('application/json')) {
+        const j = await res.json(); // provider ignored streaming and returned a plain JSON reply
+        if (j.error) throw new Error(j.error.message || 'Request failed');
+        reply.content = j.choices?.[0]?.message?.content || '';
+        reply.ttft = Math.round(performance.now() - t0);
+        if (!reply.content) { reply.content = '_The model returned an empty response._'; reply.error = true; }
+        return;
+      }
+      const reader = res.body.getReader(), dec = new TextDecoder();
+      state.abort.reader = reader;
+      let buf = '';
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done || state.abort.stopped) break;
+        buf += dec.decode(value, { stream: true });
+        const lines = buf.split('\n'); buf = lines.pop();
+        for (const raw of lines) {
+          const line = raw.trim();
+          if (!line.startsWith('data:')) continue;
+          const data = line.slice(5).trim();
+          if (data === '[DONE]') continue;
+          let j; try { j = JSON.parse(data); } catch { continue; }
+          if (j.error) throw new Error(j.error.message || 'Stream error');
+          const delta = j.choices?.[0]?.delta?.content;
+          if (delta) { if (!reply.content) reply.ttft = Math.round(performance.now() - t0); reply.content += delta; if (!raf) raf = requestAnimationFrame(paint); }
+        }
+      }
+      if (state.abort.stopped) { if (!reply.content) reply.content = '_Generation stopped._'; return; }
+      if (!reply.content) { reply.content = '_The model returned an empty response._'; reply.error = true; }
+    } catch (err) {
+      if (err.name === 'AbortError') { if (!reply.content) reply.content = '_Generation stopped._'; }
+      else { reply.content = (reply.content ? reply.content + '\n\n' : '') + '**Error:** ' + (err instanceof TypeError && /fetch|network/i.test(err.message) ? 'The browser blocked the request to openrouter.ai before it was sent. This happens when the page runs inside a sandboxed preview, from a restricted network, or behind an ad/privacy blocker. Download the file and open it in a normal browser tab (best: serve it with `python -m http.server`), then try again.' : err.message); reply.error = true; }
+    } finally {
+      if (raf) cancelAnimationFrame(raf);
+      reply.ms = Math.round(performance.now() - t0);
+      state.streaming = false; state.abort = null;
+      c.updated = Date.now(); persist();
+      renderHistory(); renderMessages(); renderSend(); scrollBottom(false);
+    }
+  }
+
+  /* ================= EVENTS ================= */
+  const promptEl = $('#prompt');
+  const autosize = () => { promptEl.style.height = 'auto'; promptEl.style.height = Math.min(promptEl.scrollHeight, 208) + 'px'; };
+  function submit() {
+    if (state.streaming) { state.abort?.abort(); return; }
+    const text = promptEl.value.trim(); if (!text) return;
+    promptEl.value = ''; autosize(); renderSend(); send(text);
+  }
+  promptEl.addEventListener('input', () => { autosize(); renderSend(); });
+  promptEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (!state.streaming) submit(); } });
+  $('#sendBtn').addEventListener('click', submit);
+
+  function startNewChat() {
+    if (state.streaming) return toast('Wait for the reply to finish');
+    const c = activeConv();
+    if (!(c && c.messages.length === 0)) { state.activeId = null; persist(); }
+    renderAll(); closeSidebar(); promptEl.focus();
+  }
+  $('#newChat').addEventListener('click', startNewChat);
+  $('#search').addEventListener('input', e => { state.query = e.target.value; renderHistory(); });
+
+  $('#history').addEventListener('click', e => {
+    const del = e.target.closest('.hist-del'); if (del) return deleteConv(del.dataset.id);
+    const ren = e.target.closest('.hist-ren'); if (ren) return renameConv(ren.dataset.id);
+    const open = e.target.closest('.hist-open'); if (open) selectConv(open.dataset.id);
+  });
+
+  messagesEl.addEventListener('click', e => {
+    const chip = e.target.closest('.chip'); if (chip) return send(chip.dataset.q);
+    const cb = e.target.closest('.cb-copy');
+    if (cb) { const code = cb.closest('.codeblock').querySelector('code'); navigator.clipboard.writeText(code.innerText).then(() => { cb.textContent = 'Copied ✓'; setTimeout(() => cb.textContent = 'Copy', 1500); }); return; }
+    const ac = e.target.closest('.act-copy');
+    if (ac) { const idx = Number(ac.closest('[data-idx]').dataset.idx); navigator.clipboard.writeText(activeConv().messages[idx].content).then(() => toast('Copied')); return; }
+    if (e.target.closest('.act-regen')) regenerate();
+  });
+
+  chatEl.addEventListener('scroll', () => { $('#toBottom').classList.toggle('hidden', nearBottom()); }, { passive: true });
+  $('#toBottom').addEventListener('click', () => scrollBottom(true, true));
+
+  $('#modelBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    const menu = $('#modelMenu'), open = menu.classList.contains('hidden');
+    if (open) { renderModelMenu(); menu.classList.remove('hidden'); } else menu.classList.add('hidden');
+    $('#modelBtn').setAttribute('aria-expanded', String(open));
+  });
+  $('#modelMenu').addEventListener('click', e => {
+    const opt = e.target.closest('.model-opt'); if (!opt) return;
+    const m = MODELS.find(x => x.id === opt.dataset.id);
+    if (m.tier === 'pro' && state.plan !== 'pro') return openPricing();
+    state.modelId = m.id; store.set('nl.model', m.id);
+    renderModelButton(); renderModelMenu(); closeModelMenu();
+    if (!activeConv() || !activeConv().messages.length) renderMessages();
+    toast('Switched to ' + m.name);
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('#modelMenu') && !e.target.closest('#modelBtn')) closeModelMenu(); });
+
+  $('#openSidebar').addEventListener('click', openSidebar);
+  $('#closeSidebar').addEventListener('click', closeSidebar);
+  $('#backdrop').addEventListener('click', closeSidebar);
+
+  $('#settingsBtn').addEventListener('click', openSettings);
+  $('#exportBtn').addEventListener('click', exportChat);
+  $('#temp').addEventListener('input', e => { $('#tempVal').textContent = e.target.value; });
+  $('#saveSettings').addEventListener('click', () => {
+    const mt = Math.max(64, Math.min(32000, parseInt($('#maxTokens').value, 10) || 4096));
+    state.settings = { temperature: Number($('#temp').value), maxTokens: mt, extra: $('#extra').value.trim().slice(0, 1500) };
+    store.set('nl.settings', state.settings); closeModal('settingsModal'); toast('Settings saved');
+  });
+  $('#clearAll').addEventListener('click', () => {
+    if (state.streaming) return;
+    if (!confirm('Delete all conversations? This cannot be undone.')) return;
+    state.convs = []; state.activeId = null; persist(); renderAll(); closeModal('settingsModal'); toast('All chats cleared');
+  });
+
+  $('#upgradeTop').addEventListener('click', openPricing);
+  document.addEventListener('click', e => { if (e.target.id === 'planBtn') openPricing(); });
+  $('#choosePro').addEventListener('click', activatePro);
+  $('#chooseFree').addEventListener('click', setFree);
+
+  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(b.dataset.close)));
+  ['settingsModal', 'pricingModal'].forEach(id => $('#' + id).addEventListener('mousedown', e => {
+    const outer = e.target.id === id, inner = id === 'pricingModal' && e.target.parentElement?.id === id;
+    if (outer || inner) closeModal(id);
+  }));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeModal('settingsModal'); closeModal('pricingModal'); closeModelMenu(); closeSidebar(); }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); startNewChat(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === '/') { e.preventDefault(); promptEl.focus(); }
+  });
+
+  /* ================= STARFIELD ================= */
+  (function stars() {
+    const cv = $('#stars'), ctx = cv.getContext('2d');
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let w, h, dpr, pts = [];
+    function resize() {
+      dpr = Math.min(devicePixelRatio || 1, 2); w = innerWidth; h = innerHeight;
+      cv.width = w * dpr; cv.height = h * dpr; cv.style.width = w + 'px'; cv.style.height = h + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const n = Math.round((w * h) / 9000);
+      pts = Array.from({ length: n }, () => ({ x: Math.random() * w, y: Math.random() * h, r: Math.random() * 1.2 + .2, s: Math.random() * .12 + .02, p: Math.random() * 6.28, c: Math.random() < .12 ? '245,158,11' : Math.random() < .4 ? '167,139,250' : '226,232,240' }));
+    }
+    function frame(t) {
+      ctx.clearRect(0, 0, w, h);
+      for (const p of pts) {
+        p.y -= p.s; if (p.y < -2) { p.y = h + 2; p.x = Math.random() * w; }
+        const a = .25 + .55 * (.5 + .5 * Math.sin(t / 1100 + p.p));
+        ctx.fillStyle = `rgba(${p.c},${a})`; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill();
+      }
+      requestAnimationFrame(frame);
+    }
+    addEventListener('resize', resize); resize(); requestAnimationFrame(frame);
+  })();
+
+  /* ================= INIT ================= */
+  if (state.plan !== 'pro' && model().tier === 'pro') { state.modelId = 'pulse'; store.set('nl.model', 'pulse'); }
+  if (state.activeId && !activeConv()) state.activeId = null;
+  renderAll(); scrollBottom(true); checkKey();
+
+  // Validate the key on load so a revoked/invalid key is obvious immediately.
+  async function checkKey() {
+    try {
+      const r = await fetch('https://openrouter.ai/api/v1/key', { headers: { Authorization: 'Bearer ' + OPENROUTER_API_KEY } });
+      if (r.status === 401) { state.key = { c: 'bg-red-500', t: 'API key invalid' }; toast('OpenRouter rejected the API key'); }
+      else if (r.ok) {
+        const d = (await r.json()).data || {};
+        const left = typeof d.limit_remaining === 'number' ? ' · $' + d.limit_remaining.toFixed(2) + ' left' : '';
+        state.key = { c: 'bg-mint shadow-[0_0_8px] shadow-mint', t: 'OpenRouter connected' + left };
+      } else state.key = { c: 'bg-gold', t: 'OpenRouter reachable' };
+    } catch { state.key = { c: 'bg-gold', t: 'Offline?' }; }
+    renderKeyStatus();
+  }
+})();
+</script>
+</body>
+</html>
